@@ -2,7 +2,7 @@ import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression._
 import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
-import org.apache.spark.mllib.tree.DecisionTree
+import org.apache.spark.mllib.tree.{DecisionTree, RandomForest}
 import org.apache.spark.mllib.tree.model.DecisionTreeModel
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -72,7 +72,17 @@ val evaluations =
       val predictionsAndLabels = cvData.map(example =>
         (model.predict(example.features),example.label)
       )
+      val accuracy =
+        new MulticlassMetrics(predictionsAndLabels).precision
+      ((impurity, depth, bins),accuracy)
     }
+evaluations.sortBy(_._2).reverse.foreach(println)
+val forest = RandomForest.trainClassifier(
+  trainData, 7, Map[Int,Int](), 20, "auto", "entropy",30 ,300)
 
+//Making Prediction
+val input = "2709, 125, 28, 23, 3224, 253, 207, 61, 6094,0 ,29"
+val vector = Vectors.dense(input.split('.').map(_.toDouble))
+forest.predict(vector)
 
 
